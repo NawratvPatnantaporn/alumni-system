@@ -1,0 +1,16 @@
+export const POPULAR_SKILLS = [
+  "React",
+  "Next.js",
+  "Node.js",
+  "TypeScript",
+  "JavaScript",
+  "Python",
+  "SQL",
+  "Tailwind CSS",
+  "UI/UX Design",
+  "Figma",
+  "Git",
+  "Docker",
+  "Project Management",
+  "Digital Marketing",
+];
