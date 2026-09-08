@@ -1065,16 +1065,6 @@ export default function DashboardPage() {
                       โพสต์ตำแหน่งงาน
                     </Button>
                   </Link>
-
-                  <Link href="/insights">
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start bg-transparent"
-                    >
-                      <TrendingUp className="w-4 h-4 mr-2 text-chart-1" />
-                      ดู Career Insights
-                    </Button>
-                  </Link>
                 </>
               )}
 
