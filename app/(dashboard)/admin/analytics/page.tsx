@@ -830,7 +830,11 @@ export default function AdminAnalyticsPage() {
                     <RechartsPieChart>
                       <Pie
                         activeIndex={activePieIndex}
-                        activeShape={renderActiveShape}
+                        activeShape={(props: unknown) =>
+                          renderActiveShape(
+                            props as Parameters<typeof renderActiveShape>[0]
+                          )
+                        }
                         data={employmentStatusData}
                         cx="50%"
                         cy="50%"

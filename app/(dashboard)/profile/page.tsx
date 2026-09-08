@@ -2381,7 +2381,7 @@ export default function ProfilePage() {
                       }
                     />
 
-                    <PrivacyToggle 
+                    {/* <PrivacyToggle 
                       label="แสดงตำแหน่งที่ตั้ง"
                       description="แสดงเฉพาะสถานที่ทำงานของคุณ"
                       checked={formData.privacy.showLocation}
@@ -2389,9 +2389,9 @@ export default function ProfilePage() {
                       onCheckedChange={(checked) =>
                         updatePrivacyField("showLocation", checked)
                       }
-                    />
+                    /> */}
 
-                    <PrivacyToggle 
+                    {/* <PrivacyToggle 
                       label="แสดง LinkedIn"
                       description="แสดงลิงก์ LinkedIn บนหน้าโปรไฟล์สาธารณะ"
                       checked={formData.privacy.showLinkedin}
@@ -2399,9 +2399,9 @@ export default function ProfilePage() {
                       onCheckedChange={(checked) =>
                         updatePrivacyField("showLinkedin", checked)
                       }
-                    />
+                    /> */}
 
-                    <PrivacyToggle 
+                    {/* <PrivacyToggle 
                       label="แสดงเว็บไซต์"
                       description="แสดงเว็บไซต์หรือ Portfolio บนหน้าโปรไฟล์สาธารณะ"
                       checked={formData.privacy.showWebsite}
@@ -2409,7 +2409,7 @@ export default function ProfilePage() {
                       onCheckedChange={(checked) =>
                         updatePrivacyField("showWebsite", checked)
                       }
-                    />
+                    /> */}
                   </div>
 
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">

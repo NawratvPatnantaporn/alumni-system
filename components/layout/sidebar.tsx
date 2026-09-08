@@ -49,12 +49,6 @@ const mainNavItems = [
     roles: ["alumni", "student", "admin", "super_admin"],
   },
   {
-    href: "/insights",
-    label: "วิเคราะห์ข้อมูล",
-    icon: BarChart3,
-    roles: ["alumni", "admin", "super_admin"],
-  },
-  {
     href: "/messages",
     label: "ข้อความ",
     icon: MessageCircle,
@@ -64,6 +58,12 @@ const mainNavItems = [
 
 const adminNavItems = [
   { href: "/admin", label: "แดชบอร์ด Admin", icon: Shield },
+  {
+    href: "/insights",
+    label: "วิเคราะห์ข้อมูล",
+    icon: BarChart3,
+    roles: ["admin", "super_admin"],
+  },
   // { href: "/admin/analytics", label: "วิเคราะห์ข้อมูล", icon: BarChart3 },
   // { href: "/admin/users", label: "จัดการผู้ใช้", icon: Users },
   // { href: "/admin/news", label: "จัดการข่าวสาร", icon: Newspaper },

@@ -1,6 +1,27 @@
 import { supabase } from "@/lib/supabase/client";
 import type { PublicAlumniProfile } from "../types/publicProfile";
 
+export type PublicProfilePreview = {
+  id: string;
+  name: string;
+  avatar: string;
+  isVerified: boolean;
+  isActive: boolean;
+  profileVisibility: string;
+  isOwner: boolean;
+};
+
+type PublicProfilePreviewRpcRow = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+  is_active: boolean | null;
+  profile_visibility: string | null;
+  is_owner: boolean | null;
+};
+
 type PublicProfileBaseRow = {
   id: string;
   first_name: string | null;
@@ -323,5 +344,45 @@ export async function getPublicAlumniProfile(
     experience,
     education,
     achievements,
+  };
+}
+
+export async function getPublicProfilePreview(
+  profileId: string,
+): Promise<PublicProfilePreview | null> {
+  const { data, error } = await supabase
+    .rpc("get_profile_preview", {
+      p_profile_id: profileId,
+    })
+    .maybeSingle();
+
+  if (error) {
+    console.error("GET PROFILE PREVIEW ERROR:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+
+    throw error;
+  }
+
+  if (!data) return null;
+
+  const row = data as PublicProfilePreviewRpcRow;
+
+  return {
+    id: row.id,
+    name:
+      [row.first_name, row.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim() || "ผู้ใช้งาน",
+
+    avatar: row.avatar_url ?? "",
+    isVerified: row.is_verified ?? false,
+    isActive: row.is_active ?? true,
+    profileVisibility: row.profile_visibility ?? "public",
+    isOwner: row.is_owner ?? false,
   };
 }

@@ -50,13 +50,8 @@ export async function saveFullProfile(userId: string, payload: any) {
 
   if (error) throw error;
 
-  await syncUserBadges(userId, {
-    skillsCount: payload.skills?.length ?? 0,
-    achievementsCount: payload.achievements?.length ?? 0,
-    careerCount: payload.careerExperiences?.length ?? 0,
-    profileCompletion,
-  });
+  await syncUserBadges();
 
-  console.log("SAVE FULL PROFILE DONE");
+  // console.log("SAVE FULL PROFILE DONE");
   return profileCompletion;
 }

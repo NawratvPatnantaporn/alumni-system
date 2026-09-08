@@ -694,7 +694,7 @@ export default function InsightsPage() {
             value="companies"
             className="text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
-            บริษัทชั้นนำ
+            บริษัท
           </TabsTrigger>
         </TabsList>
 

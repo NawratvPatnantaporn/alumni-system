@@ -46,7 +46,7 @@ const navItems = [
     href: "/insights",
     label: "วิเคราะห์ข้อมูล",
     icon: BarChart3,
-    roles: ["alumni", "admin", "super_admin"],
+    roles: ["admin", "super_admin"],
   },
   {
     href: "/admin",

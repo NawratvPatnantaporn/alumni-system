@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Mail, Linkedin, Globe, MapPin, Building2, GraduationCap, Calendar, CheckCircle, Briefcase, Award, Users, MessageCircle, UserPlus, Share2, Flag, Clock, BookOpen, Target, Heart } from "lucide-react";
+import { ArrowLeft, Mail, Linkedin, Globe, MapPin, Building2, GraduationCap, Calendar, CheckCircle, Briefcase, Award, Users, MessageCircle, UserPlus, Share2, Flag, Clock, BookOpen, Target, Heart, LockKeyhole,
+ShieldCheck, } from "lucide-react";
 import Link from "next/link";
-import { getPublicAlumniProfile, PublicProfileNotFoundError, PublicProfileForbiddenError } from "@/app/features/public-profile/service/publicProfile.service";
+import { getPublicAlumniProfile, getPublicProfilePreview, PublicProfileNotFoundError, PublicProfileForbiddenError, type PublicProfilePreview, } from "@/app/features/public-profile/service/publicProfile.service";
 import type { PublicAlumniProfile } from "@/app/features/public-profile/types/publicProfile";
 import Swal from "sweetalert2";
 import { createOrGetDirectConversation } from "@/app/features/chat/services/chat.service";
@@ -36,40 +37,62 @@ export default function ProfileDetailPage() {
   type ProfileLoadStatus = | "loading" | "success" | "not_found" | "forbidden" | "error";
 
   const [profile, setProfile] = useState<PublicAlumniProfile | null>(null);
+  const [lockedProfile, setLockedProfile] = useState<PublicProfilePreview | null>(null);
   const [loadStatus, setLoadStatus] = useState<ProfileLoadStatus>("loading");
 
   const profileId = params.id as string;
 
   const loadProfile = useCallback(async () => {
-    if (!profileId) {
+  if (!profileId) {
+    setLoadStatus("not_found");
+    return;
+  }
+
+  try {
+    setLoadStatus("loading");
+    setProfile(null);
+    setLockedProfile(null);
+
+    // 1. โหลดเฉพาะข้อมูลพื้นฐานก่อน
+    const preview = await getPublicProfilePreview(profileId);
+
+    // ไม่มี account นี้จริง
+    if (!preview) {
       setLoadStatus("not_found");
       return;
     }
 
-    try {
-      setLoadStatus("loading");
-      setProfile(null);
-
-      const result = await getPublicAlumniProfile(profileId);
-
-      setProfile(result);
-      setLoadStatus("success");
-    } catch (error) {
-      console.error("LOAD PROFILE ERROR:", error);
-
-      if (error instanceof PublicProfileNotFoundError) {
-        setLoadStatus("not_found")
-        return;
-      }
-
-      if (error instanceof PublicProfileForbiddenError) {
-        setLoadStatus("forbidden")
-        return;
-      }
-
-      setLoadStatus("error");
+    // 2. Private และไม่ใช่เจ้าของ
+    if (
+      preview.profileVisibility === "private" &&
+      !preview.isOwner
+    ) {
+      setLockedProfile(preview);
+      setLoadStatus("forbidden");
+      return;
     }
-  }, [profileId]);
+
+    // 3. มีสิทธิ์จึงค่อยโหลดข้อมูลเต็ม
+    const result = await getPublicAlumniProfile(profileId);
+
+    setProfile(result);
+    setLoadStatus("success");
+  } catch (error) {
+    // expected states ไม่ควร console.error
+    if (error instanceof PublicProfileNotFoundError) {
+      setLoadStatus("not_found");
+      return;
+    }
+
+    if (error instanceof PublicProfileForbiddenError) {
+      setLoadStatus("forbidden");
+      return;
+    }
+
+    console.error("LOAD PROFILE ERROR:", error);
+    setLoadStatus("error");
+  }
+}, [profileId]);
 
   useEffect(() => {
     let mounted = true;
@@ -115,31 +138,61 @@ export default function ProfileDetailPage() {
   }
 
   if (loadStatus === "not_found") {
-    return (
-      <div className="space-y-6">
-        <Card className="h-40 animate-pulse" />
-        <Card className="h-96 animate-pulse" />
-      </div>
-    );
-  }
+  return (
+    <ProfileStateCard
+      title="ไม่พบโปรไฟล์"
+      description="โปรไฟล์นี้อาจถูกลบ ปิดใช้งาน หรือลิงก์ไม่ถูกต้อง"
+      onBack={() => router.back()}
+    />
+  );
+}
 
-  if (loadStatus === "forbidden") {
-    return (
-      <div className="space-y-6">
-        <Card className="h-40 animate-pulse" />
-        <Card className="h-96 animate-pulse" />
-      </div>
-    );
-  }
+  if (loadStatus === "forbidden" && lockedProfile) {
+  return (
+    <LockedProfileView
+      profile={lockedProfile}
+      onBack={() => router.back()}
+      onMessage={() => handleMessageUser(lockedProfile.id)}
+      onShare={async () => {
+        const url = window.location.href;
+
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: lockedProfile.name,
+              text: `ดูโปรไฟล์ของ ${lockedProfile.name}`,
+              url,
+            });
+
+            return;
+          }
+
+          await navigator.clipboard.writeText(url);
+
+          Swal.fire({
+            icon: "success",
+            title: "คัดลอกลิงก์แล้ว",
+            timer: 1400,
+            showConfirmButton: false,
+          });
+        } catch (error) {
+          console.error("SHARE LOCKED PROFILE ERROR:", error);
+        }
+      }}
+    />
+  );
+}
 
   if (loadStatus === "error") {
-    return (
-      <div className="space-y-6">
-        <Card className="h-40 animate-pulse" />
-        <Card className="h-96 animate-pulse" />
-      </div>
-    );
-  }
+  return (
+    <ProfileStateCard
+      title="ไม่สามารถโหลดโปรไฟล์ได้"
+      description="เกิดข้อผิดพลาดขณะโหลดข้อมูล กรุณาลองใหม่อีกครั้ง"
+      onBack={() => router.back()}
+      onRetry={loadProfile}
+    />
+  );
+}
 
   if (!profile) return null;
 
@@ -418,11 +471,19 @@ export default function ProfileDetailPage() {
                   <CardContent className="space-y-4">
                     {profile.email && (
                       <a
-                        href={`mailto:${profile.email}`}
                         className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                       >
                         <Mail className="w-4 h-4 text-muted-foreground" />
                         <span className="truncate">{profile.email}</span>
+                      </a>
+                    )}
+
+                    {profile.phone && (
+                      <a
+                        className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                      >
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span className="truncate">{profile.phone}</span>
                       </a>
                     )}
 
@@ -432,7 +493,7 @@ export default function ProfileDetailPage() {
                       </p>
                     )}
 
-                    {profile.linkedin && (
+                    {/* {profile.linkedin && (
                       <a
                         href={
                           profile.linkedin.startsWith("http")
@@ -446,9 +507,9 @@ export default function ProfileDetailPage() {
                         <Linkedin className="w-4 h-4 text-muted-foreground" />
                         <span className="truncate">{profile.linkedin}</span>
                       </a>
-                    )}
+                    )} */}
 
-                    {profile.website && (
+                    {/* {profile.website && (
                       <a
                         href={
                           profile.website.startsWith("http")
@@ -462,7 +523,7 @@ export default function ProfileDetailPage() {
                         <Globe className="w-4 h-4 text-muted-foreground" />
                         <span className="truncate">{profile.website}</span>
                       </a>
-                    )}
+                    )} */}
 
                     {!profile.email && !profile.linkedin && !profile.website && (
                       <p className="text-sm text-muted-foreground">-</p>
@@ -727,5 +788,131 @@ function ProfileStateCard({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function LockedProfileView({
+  profile,
+  onBack,
+  onMessage,
+  onShare,
+}: {
+  profile: PublicProfilePreview;
+  onBack: () => void;
+  onMessage: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
+      {/* Back */}
+      <Button
+        variant="ghost"
+        onClick={onBack}
+        className="gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        กลับ
+      </Button>
+
+      {/* Profile header */}
+      <Card className="overflow-hidden rounded-2xl shadow-sm">
+        <div className="h-32 bg-gradient-to-r from-primary/80 to-accent/80" />
+
+        <CardContent className="relative pb-6 pt-0">
+          <div className="-mt-16 flex flex-col gap-4 md:-mt-12 md:flex-row md:items-end">
+            <div className="relative">
+              <Avatar className="h-28 w-28 ring-4 ring-background md:h-32 md:w-32">
+                <AvatarImage
+                  src={profile.avatar || "/placeholder.svg"}
+                  alt={profile.name}
+                />
+
+                <AvatarFallback className="text-2xl">
+                  {profile.name.slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+
+              {profile.isVerified && (
+                <div className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-green-500 ring-4 ring-background">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 pt-4 md:pb-2 md:pt-0">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-2xl font-bold md:text-3xl">
+                      {profile.name}
+                    </h1>
+
+                    {profile.isActive && (
+                      <Badge className="bg-emerald-500 text-white">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <LockKeyhole className="h-4 w-4" />
+                    โปรไฟล์ส่วนตัว
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={onMessage}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    ส่งข้อความ
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onShare}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Locked content */}
+      <Card className="rounded-2xl border-border/60 shadow-sm">
+        <CardContent className="flex min-h-[320px] flex-col items-center justify-center px-6 py-12 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+            <LockKeyhole className="h-9 w-9 text-muted-foreground" />
+          </div>
+
+          <h2 className="mt-6 text-2xl font-semibold">
+            โปรไฟล์นี้เป็นส่วนตัว
+          </h2>
+
+          <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+            ผู้ใช้นี้ตั้งค่าการมองเห็นโปรไฟล์เป็น
+            “เฉพาะตัวเอง”
+            จึงไม่สามารถดูข้อมูลส่วนตัว ทักษะ
+            ประสบการณ์การทำงาน การศึกษา
+            ผลงาน และช่องทางการติดต่อได้
+          </p>
+
+          <div className="mt-6 flex items-center gap-2 rounded-full border bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-4 w-4" />
+            ข้อมูลถูกจำกัดตามการตั้งค่าความเป็นส่วนตัวของเจ้าของโปรไฟล์
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
