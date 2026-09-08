@@ -593,10 +593,10 @@ export default function OpportunitiesPage() {
             ฝึกงาน
           </TabsTrigger>
 
-          <TabsTrigger value="mentorship" className="gap-2">
+          {/* <TabsTrigger value="mentorship" className="gap-2">
             <Users className="h-4 w-4" />
             Mentorship
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="jobs" className="space-y-6">
