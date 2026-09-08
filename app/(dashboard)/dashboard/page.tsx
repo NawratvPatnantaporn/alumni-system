@@ -21,7 +21,6 @@ import {
 
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/contexts/auth-context";
-import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import {
   Card,
   CardContent,
@@ -540,7 +539,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <NotificationDropdown variant="button" />
             <Link href="/profile">
               <Button size="sm">
                 อัปเดตโปรไฟล์
