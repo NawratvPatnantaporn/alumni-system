@@ -582,7 +582,7 @@ export default function OpportunitiesPage() {
       </motion.div>
 
       <Tabs defaultValue={currentTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="jobs" className="gap-2">
             <Briefcase className="h-4 w-4" />
             ตำแหน่งงาน
